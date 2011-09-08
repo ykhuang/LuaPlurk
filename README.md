@@ -1,17 +1,15 @@
 # LuaPlurk #
-This is a Plurk API 2.0 implementation based on Lua. Ignacia's LuaOAuth is used to do the OAuth1.0 part.
+This is a Plurk OAuth implementation based on Lua. Ignacia's LuaOAuth is used to do the OAuth1.0 part.
 
 ## Lua packages dependencies #
 
 Lua 5.1.4
+
 LuaOAuth by Ignacio: https://github.com/ignacio/LuaOAuth
 
-LuaOAuth support async and sync mode. LuaOAuth supports two modes of operation: "synchronous" and "asynchronous" mode. Only synchrous mode is support so far.
-
-LuaOAuth depends on several packages:
-luacrypto
-LuaSocket
-LuaNode by Ignacio (for async mode)
+LuaOAuth support async and sync mode. LuaOAuth supports two modes of operation: 
+"synchronous" and "asynchronous" mode. Only synchrous mode is support so far.
+Check out LuaOAuth for more package dependencies.
 
 ## Usage and examples #
 
@@ -43,9 +41,12 @@ local response_code, response_headers, response_status_line, response_body =
 
 ## Reference #
 
+Plurk API: http://www.plurk.com/API
+
+LuaOAuth: https://github.com/ignacio/LuaOAuth
 
 ## Changelog #
-2011, Sep. 8: Upload first LuaPlurk and goes v0.1.
+2011, Sep. 8: Upload first LuaPlurk and goes V0.1.
 
 
 ## Todo #
