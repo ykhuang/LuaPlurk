@@ -16,6 +16,7 @@ Check out LuaOAuth for more package dependencies.
 To request token:
 
 ``` lua
+papi = require "LuaPlurk"
 local ret, rtoken, rtoken_secret = papi.init(app_key, app_secret)
 local aurl = papi.getAuthorizedUrl(rtoken)
 ```
@@ -32,7 +33,6 @@ local access_token, access_token_secret = papi.getAccessToken(rtoken, rtoken_sec
 To access Plurk API, use init_client if you already has access token
 
 ``` lua
-papi = require "LuaPlurk"
 papi.init_client(app_key, app_secret, token, token_secret)
 local api_url = '/APP/Profile/getPublicProfile'
 local api_args = {user_id='whoever'}
