@@ -32,6 +32,7 @@ local access_token, access_token_secret = papi.getAccessToken(rtoken, rtoken_sec
 To access Plurk API, use init_client if you already has access token
 
 ``` lua
+papi = require "LuaPlurk"
 papi.init_client(app_key, app_secret, token, token_secret)
 local api_url = '/APP/Profile/getPublicProfile'
 local api_args = {user_id='whoever'}
