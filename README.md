@@ -6,7 +6,7 @@ This is a Plurk API 2.0 implementation based on Lua. Ignacia's LuaOAuth is used 
 Lua 5.1.4
 LuaOAuth by Ignacio: https://github.com/ignacio/LuaOAuth
 
-LuaOAuth support async and sync mode. Only synchrous mode is support so far.
+LuaOAuth support async and sync mode. LuaOAuth supports two modes of operation: "synchronous" and "asynchronous" mode. Only synchrous mode is support so far.
 
 LuaOAuth depends on several packages:
 luacrypto
@@ -16,20 +16,24 @@ LuaNode by Ignacio (for async mode)
 ## Usage and examples #
 
 To request token:
+
 ``` lua
--- get request token
 local ret, rtoken, rtoken_secret = papi.init(app_key, app_secret)
 local aurl = papi.getAuthorizedUrl(rtoken)
--- Prompt user to authorize
+```
+
+Prompt user to authorize
+
+``` lua
 print("Enter PIN verifier:")
 local verifier = assert(io.read("*n"))
 verifier = tostring(verifier)
 local access_token, access_token_secret = papi.getAccessToken(rtoken, rtoken_secret, verifier)
 ```
 
-To access Plurk API
+To access Plurk API, use init_client if you already has access token
+
 ``` lua
--- use init_client if you already has access token
 papi.init_client(app_key, app_secret, token, token_secret)
 local api_url = '/APP/Profile/getPublicProfile'
 local api_args = {user_id='whoever'}
