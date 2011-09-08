@@ -7,7 +7,7 @@ Lua 5.1.4
 
 LuaOAuth by Ignacio: https://github.com/ignacio/LuaOAuth
 
-LuaOAuth support async and sync mode. LuaOAuth supports two modes of operation: 
+LuaOAuth supports two modes of operation: 
 "synchronous" and "asynchronous" mode. Only synchrous mode is support so far.
 Check out LuaOAuth for more package dependencies.
 
