@@ -8,7 +8,7 @@ Lua 5.1.4
 LuaOAuth by Ignacio: https://github.com/ignacio/LuaOAuth
 
 LuaOAuth supports two modes of operation: 
-"synchronous" and "asynchronous" mode. Only synchrous mode is support so far.
+"synchronous" and "asynchronous" mode. So far LuaPlurk support only synchronous mode.
 Check out LuaOAuth for more package dependencies.
 
 ## Usage and examples #
@@ -47,8 +47,9 @@ Plurk API: http://www.plurk.com/API
 LuaOAuth: https://github.com/ignacio/LuaOAuth
 
 ## Changelog #
-2011, Sep. 8: Upload first LuaPlurk and goes V0.1.
+2011, Sep. 8: Upload first LuaPlurk and go V0.1.
 
 
 ## Todo #
 * Add token expiration check.
+* Verify LuaPlurk on each API
