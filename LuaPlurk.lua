@@ -37,6 +37,8 @@ function init_client(key, secret, token_key, token_secret)
 		OAuthToken = token_key,
 		OAuthTokenSecret = token_secret
 	})
+	oauth_token = token_key
+	oauth_token_secret = token_secret
 end
 
 function getAuthorizedUrl(token)
@@ -59,11 +61,11 @@ function getAccessToken(token, secret, verifier)
   return oauth_token, oauth_token_secret
 end
 
-function plurkRequest(token, api, args)
+function plurkRequest(api, args)
 	local api_url = 'http://www.plurk.com'..api
 	if args == nil then
 		args = {}
 	end
-	args['oauth_token'] = token
+	args['oauth_token'] = oauth_token
 	return client:PerformRequest("POST", api_url, args)
 end

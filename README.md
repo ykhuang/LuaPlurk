@@ -37,7 +37,7 @@ papi.init_client(app_key, app_secret, token, token_secret)
 local api_url = '/APP/Profile/getPublicProfile'
 local api_args = {user_id='whoever'}
 local response_code, response_headers, response_status_line, response_body =
-	papi.plurkRequest(token, api_url, api_args)
+	papi.plurkRequest(api_url, api_args)
 ```
 
 ## Reference #
@@ -52,4 +52,4 @@ LuaOAuth: https://github.com/ignacio/LuaOAuth
 
 ## Todo #
 * Add token expiration check.
-* Verify LuaPlurk on each API
+* Verify LuaPlurk on each API.
