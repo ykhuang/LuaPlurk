@@ -56,8 +56,7 @@ The JSON4Lua cannot decode empty '[]' in json string.
 ## Todo #
 * Add token expiration check.
 * Verify LuaPlurk on each API.
-	- Complete: Profile, Cliques
-* Add some json related API.	
+	- Complete: Profile, Cliques, FriendsFans
 	
 ## Known issues #
 * /APP/Timeline/uploadPicture not work since LuaOAuth does not support multipart/form-data.

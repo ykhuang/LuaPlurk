@@ -61,11 +61,11 @@ function getAccessToken(token, secret, verifier)
   return oauth_token, oauth_token_secret
 end
 
-function plurkRequest(api, args)
+function plurkRequest(api, args, header)
 	local api_url = 'http://www.plurk.com'..api
 	if args == nil then
 		args = {}
 	end
 	args['oauth_token'] = oauth_token
-	return client:PerformRequest("POST", api_url, args)
+	return client:PerformRequest("POST", api_url, args, header)
 end
