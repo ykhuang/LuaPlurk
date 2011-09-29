@@ -46,8 +46,8 @@ Plurk API: http://www.plurk.com/API
 
 LuaOAuth: https://github.com/ignacio/LuaOAuth
 
-dkjson by David Kolf, http://chiselapp.com/user/dhkolf/repository/dkjson/home
-The JSON4Lua cannot decode empty '[]' in json string.
+dkjson by David Kolf, (The JSON4Lua cannot decode empty '[]' in json string.)
+http://chiselapp.com/user/dhkolf/repository/dkjson/home
 
 ## Changelog #
 2011, Sep. 8: Upload first LuaPlurk and go V0.1.
@@ -56,7 +56,7 @@ The JSON4Lua cannot decode empty '[]' in json string.
 ## Todo #
 * Add token expiration check.
 * Verify LuaPlurk on each API.
-	- Complete: Profile, Cliques, FriendsFans
+	- Complete: Profile, Cliques, FriendsFans, Timeline(except UploadPicture)
 	
 ## Known issues #
 * /APP/Timeline/uploadPicture not work since LuaOAuth does not support multipart/form-data.
