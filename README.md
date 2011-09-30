@@ -56,7 +56,7 @@ http://chiselapp.com/user/dhkolf/repository/dkjson/home
 ## Todo #
 * Add token expiration check.
 * Verify LuaPlurk on each API.
-	- Complete: Profile, Cliques, FriendsFans, Timeline(except UploadPicture)
+	- Complete: Profile, Cliques, FriendsFans, Timeline(except UploadPicture), Alerts
 	
 ## Known issues #
 * /APP/Timeline/uploadPicture not work since LuaOAuth does not support multipart/form-data.
