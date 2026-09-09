@@ -1,71 +1,48 @@
 --[[
-	LuaPlurk:  A Lua implementation of Plurk OAuth
-	Auther: ykhuang@gmail.com
-	Version: 0.1
+    LuaPlurk: a Lua implementation of Plurk OAuth
+    Legacy module-level functions are deprecated; prefer LuaPlurk.new().
 ]]--
 
-local modname = 'LuaPlurk'
+local Client = require("luaplurk.client")
 local LuaPlurk = {}
-_G[modname] = LuaPlurk
-package.loaded[modname] = LuaPlurk
-local _G = _G
-setfenv(1,LuaPlurk)
+local default_client
 
-LuaPlurk = { app_key = nil, app_secret = nil, oauth_token = nil, oauth_token_secret =nil, client = nil}
-local oauth = _G.require "OAuth"
-
-function init(key, secret)
-  app_key = key
-  app_secret = secret
-  client = oauth.new(app_key, app_secret,
-    { RequestToken='http://www.plurk.com/OAuth/request_token',
-      AuthorizeUser = {"http://www.plurk.com/OAuth/authorize", method = "GET"},
-      AccessToken='http://www.plurk.com/OAuth/access_token'} )
-  local values = client:RequestToken()
-  return values.oauth_callback_confirmed, values.oauth_token, values.oauth_token_secret
+function LuaPlurk.new(options)
+    return Client.new(options)
 end
 
--- todo: check if the access token has expired and return status
-function init_client(key, secret, token_key, token_secret)
-  app_key = key
-  app_secret = secret
-  client = oauth.new(app_key, app_secret,
-    { RequestToken='http://www.plurk.com/OAuth/request_token',
-      AuthorizeUser = {"http://www.plurk.com/OAuth/authorize", method = "GET"},
-      AccessToken='http://www.plurk.com/OAuth/access_token'
-	}, {
-		OAuthToken = token_key,
-		OAuthTokenSecret = token_secret
-	})
-	oauth_token = token_key
-	oauth_token_secret = token_secret
+function LuaPlurk.init(key, secret)
+    local client, err = Client.new({ app_key = key, app_secret = secret })
+    if not client then return nil, err end
+    default_client = client
+    local token, token_err = client:request_token("oob")
+    if not token then return nil, token_err end
+    return token.oauth_callback_confirmed, token.oauth_token, token.oauth_token_secret
 end
 
-function getAuthorizedUrl(token)
-  return client:BuildAuthorizationUrl({ oauth_token = token })
+function LuaPlurk.init_client(key, secret, token_key, token_secret)
+    local client, err = Client.new({ app_key = key, app_secret = secret,
+        access_token = token_key, access_token_secret = token_secret })
+    if not client then return nil, err end
+    default_client = client
+    return true, nil
 end
 
-function getAccessToken(token, secret, verifier)
-  client = oauth.new(app_key, app_secret,
-    { RequestToken='http://www.plurk.com/OAuth/request_token',
-      AuthorizeUser = {"http://www.plurk.com/OAuth/authorize", method = "GET"},
-      AccessToken='http://www.plurk.com/OAuth/access_token'
-     }, {
-      OAuthToken = token,
-      OAuthVerifier = verifier
-    })
-  client:SetTokenSecret(secret)
-  local values, err, headers, status, body = client:GetAccessToken()
-  oauth_token = values.oauth_token
-  oauth_token_secret = values.oauth_token_secret
-  return oauth_token, oauth_token_secret
+function LuaPlurk.getAuthorizedUrl(token)
+    if not default_client then return nil, { kind = "validation", message = "client is not initialized", retryable = false } end
+    return default_client:authorization_url(token)
 end
 
-function plurkRequest(api, args, header)
-	local api_url = 'http://www.plurk.com'..api
-	if args == nil then
-		args = {}
-	end
-	args['oauth_token'] = oauth_token
-	return client:PerformRequest("POST", api_url, args, header)
+function LuaPlurk.getAccessToken(token, secret, verifier)
+    if not default_client then return nil, { kind = "validation", message = "client is not initialized", retryable = false } end
+    local values, err = default_client:access_token(token, secret, verifier)
+    if not values then return nil, err end
+    return values.oauth_token, values.oauth_token_secret
 end
+
+function LuaPlurk.plurkRequest(api, args)
+    if not default_client then return nil, { kind = "validation", message = "client is not initialized", retryable = false } end
+    return default_client:request("POST", api, args or {})
+end
+
+return LuaPlurk

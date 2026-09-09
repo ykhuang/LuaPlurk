@@ -1,62 +1,153 @@
-# LuaPlurk #
-This is a Plurk OAuth implementation based on Lua. Ignacia's LuaOAuth is used to do the OAuth1.0 part.
+# LuaPlurk
 
-## Lua packages dependencies #
+LuaPlurk is a Lua client for the Plurk API 2.0. It uses HTTPS and OAuth 1.0a
+for authorization. “API 2.0” is the Plurk API version; it does not mean OAuth
+2.0.
 
-Lua 5.1.4
+## Supported features
 
-LuaOAuth by Ignacio: https://github.com/ignacio/LuaOAuth
+- Lua 5.1 and 5.4 on Linux and macOS; Lua 5.4 is recommended.
+- HTTPS-only OAuth 1.0a request-token, authorization URL, and access-token
+  flows.
+- HMAC-SHA1 request signing through the HTTP `Authorization` header.
+- Generic signed `GET` and `POST` requests to documented `/APP/` paths.
+- JSON response decoding and structured errors.
+- OAuth utility calls: `checkToken`, `checkTime`, and `echo`.
+- Configurable timeouts and certificate verification using the system CA trust
+  store.
 
-LuaOAuth supports two modes of operation: 
-"synchronous" and "asynchronous" mode. So far LuaPlurk support only synchronous mode.
-Check out LuaOAuth for more package dependencies.
+## Installation
 
-## Usage and examples #
+Install Lua, LuaRocks, OpenSSL development headers, and the project
+dependencies. On Debian/Ubuntu:
 
-To request token:
+```sh
+sudo apt update
+sudo apt install -y lua5.4 liblua5.4-dev luarocks libssl-dev build-essential pkg-config
 
-``` lua
-papi = require "LuaPlurk"
-local ret, rtoken, rtoken_secret = papi.init(app_key, app_secret)
-local aurl = papi.getAuthorizedUrl(rtoken)
+cd /path/to/LuaPlurk
+luarocks --lua-version=5.4 install --only-deps luaplurk-0.1.0-1.rockspec
 ```
 
-Prompt user to authorize
+LuaPlurk requires LuaSec, LuaSocket, luaossl, and dkjson. TLS certificate
+verification is mandatory; do not disable it.
 
-``` lua
-print("Enter PIN verifier:")
-local verifier = assert(io.read("*n"))
-verifier = tostring(verifier)
-local access_token, access_token_secret = papi.getAccessToken(rtoken, rtoken_secret, verifier)
+## OAuth login
+
+Create a Plurk application to obtain an app key and app secret. Keep app
+secrets, access tokens, and token secrets out of source control and shared
+logs.
+
+```lua
+local plurk = require("LuaPlurk")
+
+local client, err = plurk.new({
+  app_key = assert(os.getenv("PLURK_APP_KEY")),
+  app_secret = assert(os.getenv("PLURK_APP_SECRET")),
+  timeout_seconds = 30,
+})
+assert(client, err and err.message)
+
+local request_token, request_err = client:request_token("oob")
+assert(request_token, request_err and request_err.message)
+
+local url, url_err = client:authorization_url(request_token.oauth_token)
+assert(url, url_err and url_err.message)
+print("Open this URL, authorize the app, then enter the verifier:")
+print(url)
+
+local verifier = assert(io.read())
+local credentials, access_err = client:access_token(
+  request_token.oauth_token,
+  request_token.oauth_token_secret,
+  verifier
+)
+assert(credentials, access_err and access_err.message)
+
+-- Store credentials.oauth_token and credentials.oauth_token_secret securely.
 ```
 
-To access Plurk API, use init_client if you already has access token
+An interactive helper is also included:
 
-``` lua
-papi.init_client(app_key, app_secret, token, token_secret)
-local api_url = '/APP/Profile/getPublicProfile'
-local api_args = {user_id='whoever'}
-local response_code, response_headers, response_status_line, response_body =
-	papi.plurkRequest(api_url, api_args)
+```sh
+lua5.4 scripts/oauth_test.lua
 ```
 
-## Reference #
+It reads `PLURK_APP_KEY` and `PLURK_APP_SECRET` from the environment.
 
-Plurk API: http://www.plurk.com/API
+## Use an existing access token
 
-LuaOAuth: https://github.com/ignacio/LuaOAuth
+```lua
+local plurk = require("LuaPlurk")
 
-dkjson by David Kolf, (The JSON4Lua cannot decode empty '[]' in json string.)
-http://chiselapp.com/user/dhkolf/repository/dkjson/home
+local client, err = plurk.new({
+  app_key = assert(os.getenv("PLURK_APP_KEY")),
+  app_secret = assert(os.getenv("PLURK_APP_SECRET")),
+  access_token = assert(os.getenv("PLURK_ACCESS_TOKEN")),
+  access_token_secret = assert(os.getenv("PLURK_ACCESS_TOKEN_SECRET")),
+})
+assert(client, err and err.message)
 
-## Changelog #
-2011, Sep. 8: Upload first LuaPlurk and go V0.1.
+local token_info, token_err = client:oauth_utils():check_token()
+assert(token_info, token_err and token_err.message)
+print("Authorized user ID: " .. tostring(token_info.user_id))
 
+local profile, profile_err = client:request("GET", "/APP/Profile/getOwnProfile", {})
+assert(profile, profile_err and profile_err.message)
+print("Display name: " .. tostring(profile.display_name))
+```
 
-## Todo #
-* Add token expiration check.
-* Verify LuaPlurk on each API.
-	- Complete: Profile, Cliques, FriendsFans, Timeline(except UploadPicture), Alerts
-	
-## Known issues #
-* /APP/Timeline/uploadPicture not work since LuaOAuth does not support multipart/form-data.
+`client:request(method, path, params)` accepts `GET` and `POST` for `/APP/`
+paths. It signs each request, uses HTTPS, and decodes successful JSON
+responses.
+
+## Errors
+
+Every operation returns either `result, nil` or `nil, error`.
+
+```lua
+{
+  kind = "transport" | "oauth" | "http" | "api" | "decode" | "validation",
+  message = "human-readable summary",
+  retryable = false,
+  request_id = "local-correlation-id",
+  status = 401,       -- when available
+  api_error = "...", -- when provided by Plurk
+}
+```
+
+Requests are never retried automatically. Applications must make their own
+deliberate decision before retrying a failed write operation.
+
+## Testing
+
+Run the offline suite:
+
+```sh
+LUA_BIN=lua5.4 ./scripts/run-tests.sh
+```
+
+To validate an existing authorization against Plurk, provide credentials as
+environment variables and run:
+
+```sh
+PLURK_TEST_APP_KEY=... PLURK_TEST_APP_SECRET=... \
+PLURK_TEST_ACCESS_TOKEN=... PLURK_TEST_ACCESS_TOKEN_SECRET=... \
+lua5.4 test/live_check_token.lua
+```
+
+This performs `checkToken`, `checkTime`, and `echo`. Do not use tokens from an
+account you care about for expiry or write-operation testing.
+
+## Legacy module API
+
+`init`, `init_client`, `getAuthorizedUrl`, `getAccessToken`, and
+`plurkRequest` remain as deprecated compatibility wrappers. New applications
+should create a client with `LuaPlurk.new()`.
+
+## Security
+
+- Do not commit or share app secrets, access tokens, or token secrets.
+- Revoke and replace any token that is accidentally disclosed.
+- Use HTTPS only; certificate verification is intentionally mandatory.
+- Report security concerns privately to the project maintainer.

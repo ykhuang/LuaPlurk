@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lua-version: ['5.1', '5.4']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua and Phase 0 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 lua5.4 luarocks lua-sec lua-socket lua-dkjson
+      - name: Install rock dependencies
+        run: luarocks --lua-version=${{ matrix.lua-version }} install --only-deps luaplurk-0.1.0-1.rockspec
+      - name: Run OAuth-free smoke test
+        run: |
+          LUA_BIN=lua${{ matrix.lua-version }}
+          test -x "$(command -v "$LUA_BIN")"
+          LUA_BIN="$LUA_BIN" ./scripts/run-tests.sh
