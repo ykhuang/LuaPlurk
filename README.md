@@ -67,14 +67,6 @@ assert(credentials, access_err and access_err.message)
 -- Store credentials.oauth_token and credentials.oauth_token_secret securely.
 ```
 
-An interactive helper is also included:
-
-```sh
-lua5.4 scripts/oauth_test.lua
-```
-
-It reads `PLURK_APP_KEY` and `PLURK_APP_SECRET` from the environment.
-
 ## Use an existing access token
 
 ```lua
