@@ -13,6 +13,8 @@ for authorization. “API 2.0” is the Plurk API version; it does not mean OAut
 - Generic signed `GET` and `POST` requests to documented `/APP/` paths.
 - JSON response decoding and structured errors.
 - OAuth utility calls: `checkToken`, `checkTime`, and `echo`.
+- Read-only wrappers for Users, Profile, Polling, Timeline, Responses,
+  Friends/Fans, Alerts, Search, Emoticons, Blocks, and Cliques.
 - Configurable timeouts and certificate verification using the system CA trust
   store.
 
@@ -89,6 +91,29 @@ assert(profile, profile_err and profile_err.message)
 print("Display name: " .. tostring(profile.display_name))
 ```
 
+## Read API wrappers
+
+The read-only resources have named wrappers, while `client:request()` remains
+available for documented endpoints that do not yet have a high-level method.
+
+```lua
+local me = assert(client:users():me())
+local profile = assert(client:profile():public("plurkapi"))
+local timeline = assert(client:timeline():list({ limit = 10 }))
+local responses = assert(client:responses():list(123456789, { count = 20 }))
+local users = assert(client:search():users("plurk", { offset = 0 }))
+```
+
+Available read methods are `users.me`, `users.karma_stats`, `profile.own`,
+`profile.public`, `polling.plurks`, `polling.unread_count`, `timeline.get`,
+`timeline.list`, `timeline.unread`, `timeline.public`, `responses.list`,
+`friends_fans.friends`, `friends_fans.fans`, `friends_fans.following`,
+`friends_fans.completion`, `alerts.active`, `alerts.history`, `search.plurks`,
+`search.users`, `emoticons.get`, `blocks.list`, `cliques.list`, and
+`cliques.get`. Methods that take options accept a table of scalar API
+parameters; required IDs, offsets, and queries are validated before a request
+is sent.
+
 `client:request(method, path, params)` accepts `GET` and `POST` for `/APP/`
 paths. It signs each request, uses HTTPS, and decodes successful JSON
 responses.
@@ -130,6 +155,18 @@ lua5.4 test/live_check_token.lua
 
 This performs `checkToken`, `checkTime`, and `echo`. Do not use tokens from an
 account you care about for expiry or write-operation testing.
+
+To run the opt-in read-only endpoint checks, use the same environment
+variables:
+
+```sh
+lua5.4 test/live_read_endpoints.lua
+```
+
+The read suite does not post, modify relationships, change settings, or expire
+tokens. It avoids printing returned account data; `timeline.get`,
+`responses.list`, and `cliques.get` are skipped when the account has no
+accessible item to inspect.
 
 ## Legacy module API
 

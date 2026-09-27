@@ -59,6 +59,46 @@ local function parse_query(body)
     return values
 end
 
+local function copy_options(client, options)
+    if options == nil then return {} end
+    if type(options) ~= "table" then
+        return nil, failure("validation", "options must be a table", request_id())
+    end
+    local copied, key, value = {}, nil, nil
+    for key, value in pairs(options) do
+        if type(key) ~= "string" or (type(value) ~= "string" and type(value) ~= "number"
+            and type(value) ~= "boolean") then
+            return nil, failure("validation", "options must have string keys and scalar values", request_id())
+        end
+        copied[key] = value
+    end
+    return copied, nil
+end
+
+local function required_value(client, name, value)
+    if (type(value) ~= "string" and type(value) ~= "number")
+        or (type(value) == "string" and value == "") then
+        return nil, failure("validation", name .. " is required", request_id())
+    end
+    return value, nil
+end
+
+local function read(client, path, options)
+    local params, err = copy_options(client, options)
+    if not params then return nil, err end
+    return client:request("GET", path, params)
+end
+
+local function read_with(client, path, name, value, options)
+    local required, err = required_value(client, name, value)
+    if not required then return nil, err end
+    local params
+    params, err = copy_options(client, options)
+    if not params then return nil, err end
+    params[name] = required
+    return client:request("GET", path, params)
+end
+
 function Client.new(options)
     if type(options) ~= "table" or type(options.app_key) ~= "string" or options.app_key == ""
         or type(options.app_secret) ~= "string" or options.app_secret == "" then
@@ -187,6 +227,107 @@ function Client:access_token(token, token_secret, verifier)
     end
     self.access_token, self.access_token_secret = credentials.oauth_token, credentials.oauth_token_secret
     return credentials, nil
+end
+
+-- Read-only API namespaces.  Each wrapper corresponds directly to one
+-- documented /APP/ endpoint and deliberately returns the API response without
+-- reshaping it.
+function Client:users()
+    return {
+        me = function() return read(self, "/APP/Users/me") end,
+        karma_stats = function() return read(self, "/APP/Users/getKarmaStats") end,
+    }
+end
+
+function Client:profile()
+    return {
+        own = function() return read(self, "/APP/Profile/getOwnProfile") end,
+        public = function(_, user_id, options)
+            return read_with(self, "/APP/Profile/getPublicProfile", "user_id", user_id, options)
+        end,
+    }
+end
+
+function Client:polling()
+    return {
+        plurks = function(_, offset, options)
+            return read_with(self, "/APP/Polling/getPlurks", "offset", offset, options)
+        end,
+        unread_count = function() return read(self, "/APP/Polling/getUnreadCount") end,
+    }
+end
+
+function Client:timeline()
+    return {
+        get = function(_, plurk_id, options)
+            return read_with(self, "/APP/Timeline/getPlurk", "plurk_id", plurk_id, options)
+        end,
+        list = function(_, options) return read(self, "/APP/Timeline/getPlurks", options) end,
+        unread = function(_, options) return read(self, "/APP/Timeline/getUnreadPlurks", options) end,
+        public = function(_, user_id, options)
+            return read_with(self, "/APP/Timeline/getPublicPlurks", "user_id", user_id, options)
+        end,
+    }
+end
+
+function Client:responses()
+    return {
+        list = function(_, plurk_id, options)
+            return read_with(self, "/APP/Responses/get", "plurk_id", plurk_id, options)
+        end,
+    }
+end
+
+function Client:friends_fans()
+    return {
+        friends = function(_, user_id, options)
+            return read_with(self, "/APP/FriendsFans/getFriendsByOffset", "user_id", user_id, options)
+        end,
+        fans = function(_, user_id, options)
+            return read_with(self, "/APP/FriendsFans/getFansByOffset", "user_id", user_id, options)
+        end,
+        following = function(_, options)
+            return read(self, "/APP/FriendsFans/getFollowingByOffset", options)
+        end,
+        completion = function() return read(self, "/APP/FriendsFans/getCompletion") end,
+    }
+end
+
+function Client:alerts()
+    return {
+        active = function() return read(self, "/APP/Alerts/getActive") end,
+        history = function() return read(self, "/APP/Alerts/getHistory") end,
+    }
+end
+
+function Client:search()
+    return {
+        plurks = function(_, query, options)
+            return read_with(self, "/APP/PlurkSearch/search", "query", query, options)
+        end,
+        users = function(_, query, options)
+            return read_with(self, "/APP/UserSearch/search", "query", query, options)
+        end,
+    }
+end
+
+function Client:emoticons()
+    return { get = function() return read(self, "/APP/Emoticons/get") end }
+end
+
+function Client:blocks()
+    return {
+        list = function(_, options) return read(self, "/APP/Blocks/get", options) end,
+    }
+end
+
+function Client:cliques()
+    return {
+        list = function() return read(self, "/APP/Cliques/getCliques") end,
+        get = function(_, clique_name)
+            return read_with(self, "/APP/Cliques/getClique", "clique_name", clique_name)
+        end,
+    }
 end
 
 function Client:oauth_utils()

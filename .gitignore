@@ -1,0 +1,5 @@
+# Local credentials must never be committed.
+.env
+
+# Internal SDK planning and development records are kept locally.
+/docs/
